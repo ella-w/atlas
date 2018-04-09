@@ -156,7 +156,7 @@ shpAus_sf_cancer <- inner_join(shpAus_sf, simdata, by = ("SA2"))
 #plot(shpAus_sf_cancer)
 
 shapeAus <- fasterize(shpAus_sf_cancer, r, 'SIR')
-#plot(shapeAus)
+plot(shapeAus)
 
 WA <- shpAus_sf_cancer %>%
   filter(STE_NAME16 == "Western Australia")
