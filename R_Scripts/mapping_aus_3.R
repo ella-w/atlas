@@ -1,16 +1,17 @@
 ## --- Load librarys --- ##
+library(dplyr)
+require(fasterize)
+require(geosphere)
+library(ggplot2)
+#library(magicfor)
+require(raster)
 library(rgl)
 library(rgdal)
 library(rgeos)
-library(ggplot2)
 library(plot3D)
-library(tidyverse)
 library(sf)
-library(magicfor)
-require(fasterize)
 require(sp)
-require(raster)
-require(geosphere)
+library(tidyverse)
 
 ## --------------------- Hey look at these, some fancy functions ----------------------- ##
 #' @param new.device a logical value. If TRUE, creates a new device
@@ -188,29 +189,78 @@ simy <- simdata$Lat
 #   }
 # }
 
-plot(shpAus)
+#plot(shpAus)
 
 polygon <- shpAus@polygons[[5]]@Polygons[[1]]@coords
 polygonx <- polygon[,1]
 polygony <- polygon[,2]
 polypoint <- point.in.polygon(coords$ausx, coords$ausy, polygonx, polygony)
 plot(polypoint)
-# now using the abve garbage, right a loop that changes the number of polygonssss
+# now using the abve garbage, right a loop that changes the number of polygons
 
-magic_for() 
+# magic_for()
+# for (i in 1:2292){
+#   polygon <- shpAus@polygons[[i]]@Polygons[[1]]@coords
+#   polygonx <- polygon[,1]
+#   polygony <- polygon[,2]
+#   confirm <- point.in.polygon(coords$ausx, coords$ausy, polygonx, polygony)
+#   put(confirm)
+# }
+# polyyy <- magic_result_as_dataframe()
+
+coords2 <- coords
+coords2$ID <- 1:82074
+
+
+greg <- NULL
+  
 for (i in 1:2292){
   polygon <- shpAus@polygons[[i]]@Polygons[[1]]@coords
   polygonx <- polygon[,1]
   polygony <- polygon[,2]
-  poly <- point.in.polygon(coords$ausx, coords$ausy, polygonx, polygony)
-  put(poly)
+  confirm <- point.in.polygon(coords2$ausx, coords2$ausy, polygonx, polygony)
+  ID <- coords2$ID[which(confirm == 1)]
+  if (length(ID) != 0){
+    greg <- rbind(greg, data.frame(ID,i))
+  }
 }
 
-polyyy <- magic_result_as_dataframe()
+plotting <- merge(greg, coords2)
+plotting <- plotting[,-(5:6), drop=FALSE]
 
-# now that I have all those points of data, lets get rid of those zeros
-data <- polyyy[apply(polyyy!=0, 1, all),]
 # wrote this csv so i didnt have run the gotdamned for loop again. 
-write.csv(data, "Polygon_data.csv")
+write.csv(plotting, "Polygon_data_2.csv")
 
+##    ---    Lets plots some more     ---     ##
+# Going to try plotting in ggplot and rgl 
+rgl_init()
+rgl.points(plotting$ausx, plotting$ausy, ausz, 
+           color = get_colors(plotting$i, c("#FF0000", "#FF0000", "#FF0000", "#FF2A00", "#FF3F00", "#FF4E00", "#FF5900", "#FF6300", "#FF6C00", "#FF7400", "#FF7B00", "#FF8100",
+                                   "#F98700", "#F18C00", "#E89200", "#E09600", "#D69B00", "#CC9F00", "#C2A300", "#B7A700", "#ABAB00", "#9DAF00", "#8EB200", "#7DB600",
+                                   "#67B900", "#4BBC00", "#08BF00", "#00C200", "#00C500", "#00C800", "#00CA00", "#00CD00", "#00D000", "#00D200", "#00D400", "#00D700",
+                                   "#00D900", "#00DB00", "#00DD00", "#00DF2F", "#00E156", "#00E371", "#00E587", "#00E79A", "#00E8AC", "#00EABD", "#00EBCE", "#00ECDE",
+                                   "#00ECED", "#00EDFD")), 
+           size = 2)
 
+ggplot(data = shpAus_sf_cancer, aes( x = Long, y = Lat)) + geom_polygon(aes(fill = SIR))
+
+map.df <- fortify(shpAus)     # where map is the shapefile object
+
+croc <- match(shpAus$SA2_5DIG16, simdata$SA2)
+simdata2 = simdata[croc,]
+
+# Append data
+Append <- data.frame(
+  id = unique(map.df$id),
+  my.var = simdata2$SIR
+  )
+
+dat <- inner_join(map.df, Append, by = 'id')
+
+h# Plot
+
+ggplot(data = dat, aes(x = long, y = lat, group = group)) +
+         geom_polygon(aes(fill = my.var))
+       
+       
+  
