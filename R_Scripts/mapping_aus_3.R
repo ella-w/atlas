@@ -155,7 +155,7 @@ shpAus_sf_cancer <- inner_join(shpAus_sf, simdata, by = ("SA2"))
 #plot(shpAus_sf_cancer)
 
 shapeAus <- fasterize(shpAus_sf_cancer, r, 'SIR')
-plot(shapeAus)
+#plot(shapeAus)
 
 WA <- shpAus_sf_cancer %>%
   filter(STE_NAME16 == "Western Australia")
@@ -207,3 +207,10 @@ for (i in 1:2292){
 }
 
 polyyy <- magic_result_as_dataframe()
+
+# now that I have all those points of data, lets get rid of those zeros
+data <- polyyy[apply(polyyy!=0, 1, all),]
+# wrote this csv so i didnt have run the gotdamned for loop again. 
+write.csv(data, "Polygon_data.csv")
+
+
